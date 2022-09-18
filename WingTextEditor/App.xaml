@@ -1,0 +1,16 @@
+﻿<Application x:Class="WingTextEditor.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:WingTextEditor"
+             StartupUri="MainView.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/MenuTheme.xaml"/>
+                <ResourceDictionary Source="Themes/TextTheme.xaml"/>
+                <ResourceDictionary Source="Themes/ButtonThemes.xaml"/>
+                <ResourceDictionary Source="Themes/TabControlTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
