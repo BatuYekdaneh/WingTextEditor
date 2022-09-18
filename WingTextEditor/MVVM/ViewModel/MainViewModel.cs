@@ -243,7 +243,6 @@ namespace WingTextEditor.MVVM.ViewModel
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
             }
         }
 
