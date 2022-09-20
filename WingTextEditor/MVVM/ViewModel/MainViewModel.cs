@@ -61,6 +61,18 @@ namespace WingTextEditor.MVVM.ViewModel
 
             }
         }
+        private string output { get; set; }
+
+        public string Output
+        {
+            get { return output; }
+            set
+            {
+                output = value;
+                OnPropertyChanged("Output");
+
+            }
+        }
         private LanguageModel selectedLanguageModel { get; set; }
 
         public LanguageModel SelectedLanguageModel
@@ -237,14 +249,11 @@ namespace WingTextEditor.MVVM.ViewModel
 
         public void Run(object obj)
         {
-            try
-            {
-                MessageBox.Show(SelectedLanguageModel.Language.Execute(TabControlModels));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            
+                Output = SelectedLanguageModel.Language.Execute(TabControlModels);
+              //  MessageBox.Show();SelectedLanguageModel.Language.Execute(TabControlModels)
+           
+
         }
 
         public void LanguagesAsRadioButton(object obj)

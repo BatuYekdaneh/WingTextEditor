@@ -27,11 +27,22 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBox TextWrapping="Wrap" Text="{Binding PageText, UpdateSourceTrigger=PropertyChanged}" do:TextBoxHelper.SelectedText="{Binding ElementName=tbcntrl, UpdateSourceTrigger=PropertyChanged, Path=DataContext.SelectedText}">
+                                
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource TextTheme}"/>
                                 </TextBox.Style>
+                                
                             </TextBox>
-                            <Button Grid.Row="1" Content="Run" Command="{Binding ElementName=tbcntrl, Path=DataContext.RunCommand}"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding ElementName=tbcntrl, Path=DataContext.Output}"/>
+                                <Button Grid.Column="1" Content="Run" Command="{Binding ElementName=tbcntrl, Path=DataContext.RunCommand}"/>
+                                
+                            </Grid>
                         </Grid>
                     </DataTemplate>
                 </TabControl.ContentTemplate>
