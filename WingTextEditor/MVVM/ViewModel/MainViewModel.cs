@@ -25,9 +25,6 @@ namespace WingTextEditor.MVVM.ViewModel
 
         public ObservableCollection<MenuModel> menus { get; set; }
         private ObservableCollection<TabControlModel> tabControlModels { get; set; }
-
-        //The list that holds programming languages you can implement
-        private List<MenuModel> LanguageMenu;
         public ObservableCollection<TabControlModel> TabControlModels
         {
             get { return tabControlModels; }
@@ -73,88 +70,9 @@ namespace WingTextEditor.MVVM.ViewModel
 
             }
         }
-        private LanguageModel selectedLanguageModel { get; set; }
-
-        public LanguageModel SelectedLanguageModel
-        {
-            get { return selectedLanguageModel; }
-            set
-            {
-
-                if (selectedLanguageString == null)
-                {
-                    selectedLanguageModel = value;
-                    SelectedLanguageString = value.ToString();
-                    menus[4].Name += selectedLanguageString;
-                }
-                else
-                {
-                    string temp = selectedLanguageString;
-                    selectedLanguageModel = value;
-                    SelectedLanguageString = value.ToString();
-                    menus[4].Name = menus[4].Name.Replace(temp, SelectedLanguageString.ToString());
-
-                }
-
-                OnPropertyChanged("SelectedLanguageModel");
-
-            }
-        }
-        private string selectedLanguageString { get; set; }
-
-        public string SelectedLanguageString
-        {
-            get { return selectedLanguageString; }
-            set
-            {
-
-                selectedLanguageString = value;
-                OnPropertyChanged("SelectedLanguageString");
-            }
-        }
 
 
 
-        private int caretIndex { get; set; }
-
-        public int CaretIndex
-        {
-            get { return caretIndex; }
-            set
-            {
-
-                caretIndex = value;
-                OnPropertyChanged("CaretIndex");
-            }
-        }
-
-        private double width { get; set; }
-
-        public double Width
-        {
-            get { return width; }
-            set
-            {
-
-
-                width = value;
-
-                OnPropertyChanged("Width");
-
-
-            }
-        }
-        private bool focusControl { get; set; }
-
-        public bool FocusControl
-        {
-            get { return focusControl; }
-            set
-            {
-                focusControl = value;
-                OnPropertyChanged("FocusControl");
-            }
-        }
 
 
 
@@ -172,17 +90,6 @@ namespace WingTextEditor.MVVM.ViewModel
 
         private ICommand deleteSelectedPageCommand;
 
-        private ICommand languagesAsRadioButtonCommand { get; set; }
-
-        public ICommand LanguagesAsRadioButtonCommand
-        {
-            get { return languagesAsRadioButtonCommand; }
-            set
-            {
-                languagesAsRadioButtonCommand = value;
-                OnPropertyChanged("LanguagesAsRadioButtonCommand");
-            }
-        }
         private ICommand runCommand { get; set; }
 
         public ICommand RunCommand
@@ -207,7 +114,6 @@ namespace WingTextEditor.MVVM.ViewModel
             loadCommand = new RelayCommand(Load);
             newPageCommand = new RelayCommand(NewPage, canNewPage);
             deleteSelectedPageCommand = new RelayCommand(DeleteSelectedPage, CanDeleteSelectedPage);
-            languagesAsRadioButtonCommand = new RelayCommand(LanguagesAsRadioButton);
             RunCommand = new RelayCommand(Run);
             List<MenuModel> FileMenu = new List<MenuModel>()
             {
@@ -222,43 +128,20 @@ namespace WingTextEditor.MVVM.ViewModel
             {
                 new MenuModel(){Name="Selected Text" ,Action=selectTextCommand},
             };
-            LanguageMenu = new List<MenuModel>()
-            {
-                new LanguageModel(){Name="Wing", Language=new(ExecuteType.CStyle)},
-                new LanguageModel(){Name="Java"},
-                new LanguageModel(){Name="C#"},
-            };
             menus.Add(new MenuModel() { Name = "File", MenuModels = FileMenu });
             menus.Add(new MenuModel() { Name = "Edit", MenuModels = EditMenu });
-            menus.Add(new MenuModel() { Name = "View" });
-            menus.Add(new MenuModel() { Name = "Language", MenuModels = LanguageMenu });
-            menus.Add(new MenuModel() { Name = "Selected Language: ", Tag = "constant" });
             tabControlModels.Add(new TabControlModel { Name = "Main Page" });
             ActivePage = tabControlModels[0];
-            SelectedLanguageModel = LanguageMenu[0] as LanguageModel;
-
-            //Serializition of languages
-            var options = new JsonSerializerOptions() { WriteIndented = true };
-            foreach (var item in LanguageMenu)
-            {
-                string temp = JsonSerializer.Serialize(item as LanguageModel, options);
-                File.WriteAllText("Data/" + item.Name + ".json", temp);
-            }
-
         }
 
         public void Run(object obj)
         {
-            
-                Output = SelectedLanguageModel.Language.Execute(TabControlModels);
-              //  MessageBox.Show();SelectedLanguageModel.Language.Execute(TabControlModels)
+
+            if(ActivePage is not null && activePage.PageText is not null)
+                Output=Wing.Execute(activePage.PageText);
+
+
            
-
-        }
-
-        public void LanguagesAsRadioButton(object obj)
-        {
-            SelectedLanguageModel = obj as LanguageModel;
         }
         public void Exit(object obj)
         {
@@ -289,8 +172,6 @@ namespace WingTextEditor.MVVM.ViewModel
         {
             string text = JsonSerializer.Serialize(TabControlModels);
             File.WriteAllText("Saves/Project.json", text);
-            string selectedLanguage = JsonSerializer.Serialize(SelectedLanguageModel);
-            File.WriteAllText("Saves/languagesettings.json", selectedLanguage);
 
 
         }
@@ -303,7 +184,6 @@ namespace WingTextEditor.MVVM.ViewModel
                 tabControlModels.Add(model);
             ActivePage = tabControlModels[0];
             string selectedLanguage = File.ReadAllText("Saves/languagesettings.json");
-            SelectedLanguageModel = JsonSerializer.Deserialize<LanguageModel>(selectedLanguage);
         }
         public void NewPage(object obj)
         {

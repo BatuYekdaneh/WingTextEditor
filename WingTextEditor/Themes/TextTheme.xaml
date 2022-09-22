@@ -4,19 +4,9 @@
     <Style TargetType="TextBox" x:Key="TextTheme">
         <Setter Property="Tag" Value="{Binding ElementName=tbcntrl, Path=DataContext.SelectedLanguageString, Mode=OneWay}"/>
         <Setter Property="AcceptsReturn" Value="True"/>
-        <Style.Triggers>
-            <Trigger Property="Tag" Value="Java">
-                <Setter Property="Foreground" Value="Aqua"/>
-            </Trigger>
-            <Trigger Property="Tag" Value="Wing">
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="Background" Value="DarkSlateGray"/>
-                <Setter Property="FontSize" Value="20"/>
-            </Trigger>
-            <Trigger Property="Tag" Value="C#">
-                <Setter Property="Foreground" Value="Purple"/>
-            </Trigger>
-        </Style.Triggers>
-
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="DarkSlateGray"/>
+        <Setter Property="FontSize" Value="20"/>
+        
     </Style>
 </ResourceDictionary>

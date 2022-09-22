@@ -17,7 +17,7 @@
             <RowDefinition Height="50"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2">
+        <Grid Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2">
             <TabControl x:Name="tbcntrl" ItemsSource="{Binding TabControlModels}" SelectedItem="{Binding ActivePage}">
                 <TabControl.ContentTemplate>
                     <DataTemplate>
@@ -27,13 +27,11 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBox TextWrapping="Wrap" Text="{Binding PageText, UpdateSourceTrigger=PropertyChanged}" do:TextBoxHelper.SelectedText="{Binding ElementName=tbcntrl, UpdateSourceTrigger=PropertyChanged, Path=DataContext.SelectedText}">
-                                
+
                                 <TextBox.Style>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource TextTheme}"/>
                                 </TextBox.Style>
-                                
                             </TextBox>
-
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -41,7 +39,6 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox Text="{Binding ElementName=tbcntrl, Path=DataContext.Output}"/>
                                 <Button Grid.Column="1" Content="Run" Command="{Binding ElementName=tbcntrl, Path=DataContext.RunCommand}"/>
-                                
                             </Grid>
                         </Grid>
                     </DataTemplate>
@@ -95,7 +92,7 @@
                 </TabControl.Resources>
             </TabControl>
         </Grid>
-        <Menu Grid.ColumnSpan="2" x:Name="menu" ItemsSource="{Binding menus}">
+        <Menu Grid.ColumnSpan="2" x:Name="menu" ItemsSource="{Binding menus}" >
             <Menu.Resources>
                 <Style TargetType="MenuItem" BasedOn="{StaticResource MenuButtonTheme}">
                     <Setter Property="Height" Value="{Binding ElementName=menu, Path=ActualHeight}"/>

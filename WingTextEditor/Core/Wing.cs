@@ -7,66 +7,49 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using WingTextEditor.MVVM.Model;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace WingTextEditor.Core
 {
-    public class Language
+    public static class Wing
     {
-        public ExecuteType executeType { get; set; }
-        public List<string> primitiveTypes { get; set; }
-        public List<string> keyWords { get; set; }
-        public List<string> declaring { get; set; }
-
-
-        public Language(ExecuteType executeType)
+        public static string Execute(string data)
         {
-            this.executeType = executeType;
-            primitiveTypes = new List<string>()
+            string returnedValue = "";
+            try
             {
-                "int","string","bool"
-            };
-            keyWords = new List<string>()
+                StringBuilder sb = new StringBuilder();
+                List<Variable<object>> variables = new List<Variable<object>>();
+                var datas = TokenStream(data);
+                if (datas.errors != null)
+                {
+                    return datas.errors[0].ToString();
+                }
+                var otherDatas = Parse(datas.tokens, variables);
+                if (otherDatas.errors != null)
+                {
+                    return otherDatas.errors[0].ToString();
+                }
+                returnedValue = otherDatas.builder.ToString();
+            }
+            catch(Exception ex)
             {
-                "if","else","const","let","array"
-            };
-            declaring = new List<string>()
-            {
-                "let {variableName} is {object}",
-                "array {variableName} is {primitiveTypes} type",
-                "{primitiveTypes} {variableName} is {object}",
-            };
+                returnedValue = "Unknown Error Happened";
+            }
 
-        }
-        public string Execute(ObservableCollection<TabControlModel> executedCollection)
-        {
-            string data = executedCollection[0].PageText;
-            StringBuilder sb = new StringBuilder();
-            List<Variable<object>> variables = new List<Variable<object>>();
-            var datas = TokenStream(data);
-            if (datas.errors != null)
-            {
-                return datas.errors[0].ToString();
-            }
-            var otherDatas = Parse(datas.tokens,variables);
-            if (otherDatas.errors != null)
-            {
-                return otherDatas.errors[0].ToString();
-            }
-            foreach (Token tokens in datas.tokens)
-            {
-                sb.AppendLine(tokens.ToString());
-            }
             
 
-            return otherDatas.builder.ToString();
+            return returnedValue;
         }
 
-        public (List<Error> errors, StringBuilder builder) Parse(List<Token> tokens, List<Variable<object>> variables)
+        public static (List<Error> errors, StringBuilder builder) Parse(List<Token> tokens, List<Variable<object>> variables)
         {
             int length = tokens.Count;
             int pos = 0;
+  
+
             List<Error> errors = new List<Error>();
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -147,6 +130,7 @@ namespace WingTextEditor.Core
                 }
                 if (indexArray == -1)
                 {
+
                     errors.Add(new Error("No variable found"));
                     return null;
                 }
@@ -173,9 +157,11 @@ namespace WingTextEditor.Core
                 if (pos >= length)
                     break;
                 Token token = tokens[pos];
-
-                if (token.type == "keyword" && (token.value == "print" || token.value=="printf"))
+                if (token.type == "keyword" && token.value == "break")
+                    break;
+                else if (token.type == "keyword" && (token.value == "print" || token.value == "printf"))
                 {
+
                     if (length != pos + 1 && length > 1 && (tokens[pos + 1].type == "str" ||
                         tokens[pos + 1].type == "int" || tokens[pos + 1].type == "customVariableName" ||
                         tokens[pos + 1].type == "bracket"))
@@ -190,19 +176,20 @@ namespace WingTextEditor.Core
                             }
                             if (index == -1)
                             {
+                                
                                 errors.Add(new Error("No variable found"));
                                 return (errors, null);
                             }
-                            if(token.value=="print")
+                            if (token.value == "print")
                                 stringBuilder.Append(variables[index].value);
                             else
-                                stringBuilder.Append(variables[index].value+"\n");
+                                stringBuilder.Append(variables[index].value + "\n");
                             pos += 2;
                             continue;
                         }
                         else if (tokens[pos + 1].type == "bracket")
                         {
-                            List<Token> tokenList = InBracketTokens(pos,"(");
+                            List<Token> tokenList = InBracketTokens(pos, "(");
                             List<Token> tokenListCopy = new();
                             tokenListCopy.AddRange(tokenList);
                             var datas = Parse(tokenList, variables);
@@ -210,7 +197,7 @@ namespace WingTextEditor.Core
                             if (datas.errors is not null)
                                 errors.AddRange(datas.errors);
                             int i = 1;
-                            while(tokens[pos + i].type == "bracket")
+                            while (tokens[pos + i].type == "bracket")
                             {
                                 i++;
                             }
@@ -219,9 +206,9 @@ namespace WingTextEditor.Core
                             {
                                 tokens.Remove(tokensArray);
                             }
-                            if(tokens[pos + 2].type == "customVariableName")
+                            if (tokens[pos + 2].type == "customVariableName")
                             {
-                                Variable<object> variable = getVariable(pos+i);
+                                Variable<object> variable = getVariable(pos + i);
                                 if (variable is null)
                                     return (errors, null);
 
@@ -251,7 +238,7 @@ namespace WingTextEditor.Core
                                 stringBuilder.Append(tokens[pos + 1].value);
                             else
                                 stringBuilder.Append(tokens[pos + 1].value + "\n");
-                            if(pos+2<length && tokens[pos + 2].type == "operator")
+                            if (pos + 2 < length && tokens[pos + 2].type == "operator")
                             {
                                 errors.Add(new Error("Syntax Error"));
                                 return (errors, null);
@@ -270,11 +257,11 @@ namespace WingTextEditor.Core
 
                     pos += 2;
                 }
-                else if(token.type == "operator" && (token.value == "+" || token.value == "-" ||
+                else if (token.type == "operator" && (token.value == "+" || token.value == "-" ||
                     token.value == "*" || token.value == "/"))
                 {
                     int index = pos;
-                    string operatorName=tokens[index].value;
+                    string operatorName = tokens[index].value;
 
                     bool isLeftVariableValid = true;
                     bool isRightVariableValid = true;
@@ -283,13 +270,13 @@ namespace WingTextEditor.Core
 
                     Variable<object> leftVariable;
                     Variable<object> rightVariable;
-                    
+
 
 
                     try
                     {
-                    leftVariable = getVariableWithoutError(pos - 1);
-                    rightVariable = getVariableWithoutError(pos + 1);
+                        leftVariable = getVariableWithoutError(pos - 1);
+                        rightVariable = getVariableWithoutError(pos + 1);
                     }
                     catch (Exception e)
                     {
@@ -298,14 +285,14 @@ namespace WingTextEditor.Core
                     }
 
 
-                    if(leftVariable is null || leftVariable.type!="int")
+                    if (leftVariable is null || leftVariable.type != "int")
                         isLeftVariableValid = false;
-                    if(rightVariable is null || rightVariable.type != "int")
+                    if (rightVariable is null || rightVariable.type != "int")
                         isRightVariableValid = false;
 
 
-                    if(length>2 && (tokens[pos-1].type=="int" || isLeftVariableValid) 
-                        && (tokens[pos + 1].type == "int" 
+                    if (length > 2 && (tokens[pos - 1].type == "int" || isLeftVariableValid)
+                        && (tokens[pos + 1].type == "int"
                         || isRightVariableValid))
                     {
 
@@ -321,9 +308,9 @@ namespace WingTextEditor.Core
                                 case "+":
                                     variable1.value = Convert.ToInt32(variable1.value) + Convert.ToInt32(variable2.queue.Peek()) + "";
                                     break;
-                                    case "-":
+                                case "-":
                                     variable1.value = Convert.ToInt32(variable1.value) - Convert.ToInt32(variable2.queue.Peek()) + "";
-                                    break ;
+                                    break;
                                 case "*":
                                     variable1.value = Convert.ToInt32(variable1.value) * Convert.ToInt32(variable2.queue.Peek()) + "";
                                     break;
@@ -336,7 +323,7 @@ namespace WingTextEditor.Core
                         {
                             Variable<object> variable = getVariable(pos - 1);
                             if (variable is null)
-                                return (errors,null);
+                                return (errors, null);
 
                             variable.AddQueueElement(Convert.ToInt32(variable.value));
                             switch (operatorName)
@@ -356,11 +343,11 @@ namespace WingTextEditor.Core
                             }
 
                         }
-                        else if(tokens[pos + 1].type == "customVariableName")
+                        else if (tokens[pos + 1].type == "customVariableName")
                         {
                             Variable<object> variable = getVariable(pos + 1);
-                            if(variable is null)
-                                return(errors,null); 
+                            if (variable is null)
+                                return (errors, null);
 
                             variable.AddQueueElement(Convert.ToInt32(variable.value));
                             switch (operatorName)
@@ -403,17 +390,17 @@ namespace WingTextEditor.Core
 
 
                     }
-                    else if(length > 2 && (tokens[pos + 1].type == "bracket" || tokens[pos - 1].type == "bracket"))
+                    else if (length > 2 && (tokens[pos + 1].type == "bracket" || tokens[pos - 1].type == "bracket"))
                     {
-                        
-                        if(tokens[pos + 1].type == "bracket")
+
+                        if (tokens[pos + 1].type == "bracket")
                         {
-                            List<Token> list = InBracketTokens(pos , "(");
-                            Parse(list,variables);
+                            List<Token> list = InBracketTokens(pos, "(");
+                            Parse(list, variables);
                         }
-                        if(tokens[pos - 1].type == "bracket")
+                        if (tokens[pos - 1].type == "bracket")
                         {
-                            List<Token> list1 = InBracketTokensReverse(pos , "(");
+                            List<Token> list1 = InBracketTokensReverse(pos, "(");
                             Parse(list1, variables);
                         }
 
@@ -566,7 +553,7 @@ namespace WingTextEditor.Core
                                     }
                                     else
                                     {
-                                        
+
                                         tokens[pos - backIndex].value = int.Parse(tokens[pos - backIndex].value) / int.Parse(tokens[pos + i].value) + "";
                                     }
                                     break;
@@ -574,16 +561,16 @@ namespace WingTextEditor.Core
                             }
 
                         }
-                        int bracketAmount =1;
+                        int bracketAmount = 1;
                         int tempNumber = index;
-                        List<Token> tokenList = new();   
-                        while (tempNumber<tokens.Count)
+                        List<Token> tokenList = new();
+                        while (tempNumber < tokens.Count)
                         {
                             if (bracketAmount > 1 && tokens[tempNumber].value == ")")
                             {
                                 bracketAmount--;
                             }
-                            if(bracketAmount ==1 && tokens[tempNumber].value == ")")
+                            if (bracketAmount == 1 && tokens[tempNumber].value == ")")
                             {
                                 break;
                             }
@@ -596,7 +583,7 @@ namespace WingTextEditor.Core
                         }
                         foreach (Token token1 in tokenList)
                             tokens.Remove(token1);
-                            
+
 
                     }
                     else
@@ -608,13 +595,13 @@ namespace WingTextEditor.Core
                 else if (token.type == "variableName")
                 {
                     int index = 0;
-                    object value=0;
+                    object value = 0;
                     bool isValueChange = false;
                     if (tokens[pos + 3].type == "bracket" || tokens[pos + 3].type == "customVariableName")
                     {
-                        if(tokens[pos + 3].type == "bracket")
+                        if (tokens[pos + 3].type == "bracket")
                         {
-                            List<Token> tokenList = InBracketTokens(pos + 2 , "(");
+                            List<Token> tokenList = InBracketTokens(pos + 2, "(");
                             List<Token> tokenListCopy = new();
                             tokenListCopy.AddRange(tokenList);
                             var datas = Parse(tokenList, variables);
@@ -638,8 +625,8 @@ namespace WingTextEditor.Core
                                 return (errors, null);
 
 
-                                value=variable.value;
-                            isValueChange=true;
+                            value = variable.value;
+                            isValueChange = true;
                             if (variable.queue.Count != 0)
                             {
                                 variable.value = variable.getFirstQueueElement();
@@ -648,8 +635,8 @@ namespace WingTextEditor.Core
                         }
                         else
                         {
-                            isValueChange=true;
-                            value =tokens[pos + 3 + index].value;
+                            isValueChange = true;
+                            value = tokens[pos + 3 + index].value;
                         }
                     }
 
@@ -659,17 +646,17 @@ namespace WingTextEditor.Core
 
                     bool isLet = token.value == "let" && (tokens[pos + 3 + index].type == "str"
     || tokens[pos + 3 + index].type == "int" || tokens[pos + 3 + index].type == "bool" ||
-                        (tokens[pos + 3 + index].type == "customVariableName")) ;
+                        (tokens[pos + 3 + index].type == "customVariableName"));
                     bool isInt = token.value == "int" && (tokens[pos + 3 + index].type == "int" ||
-                        (tokens[pos + 3 + index].type=="customVariableName" && variable1.type=="int"));
-                    bool isBool=token.value == "bool" && (tokens[pos + 3 + index].type == "bool" ||
+                        (tokens[pos + 3 + index].type == "customVariableName" && variable1.type == "int"));
+                    bool isBool = token.value == "bool" && (tokens[pos + 3 + index].type == "bool" ||
                         (tokens[pos + 3 + index].type == "customVariableName" && variable1.type == "bool"));
                     bool isArray = token.value == "array" && (tokens[pos + 3 + index].value == "int" ||
                         tokens[pos + 3 + index].value == "string" || tokens[pos + 3 + index].value == "bool");
                     bool isString = token.value == "string" && (tokens[pos + 3 + index].type == "str" ||
                         (tokens[pos + 3 + index].type == "customVariableName" && variable1.type == "str"));
                     bool isValid = pos + 3 + index < tokens.Count && tokens[pos + 1].type == "customVariableName" &&
-    tokens[pos + 2].type == "keyword" && tokens[pos + 2].value == "is" &&  (isLet || isInt || isString || isBool || isArray);
+    tokens[pos + 2].type == "keyword" && tokens[pos + 2].value == "is" && (isLet || isInt || isString || isBool || isArray);
                     if (isValid)
                     {
                         bool valid = true;
@@ -686,7 +673,7 @@ namespace WingTextEditor.Core
                         }
                         if (tokens[pos + 3 + index].type == "int"
                             || (tokens[pos + 3 + index].type == "customVariableName" && variable1.type == "int"))
-                            if(isValueChange)
+                            if (isValueChange)
                                 variables.Add(new Variable<object>("int", value, tokens[pos + 1].value));
                             else
                                 variables.Add(new Variable<object>("int", int.Parse(tokens[pos + 3 + index].value), tokens[pos + 1].value));
@@ -698,7 +685,7 @@ namespace WingTextEditor.Core
                                 variables.Add(new Variable<object>("bool", tokens[pos + 3 + index].value, tokens[pos + 1].value));
                         else if (token.value == "array")
                         {
-                            if(tokens[pos + 3].value == "int" )
+                            if (tokens[pos + 3].value == "int")
                                 variables.Add(new Variable<object>("array", new List<int>(), tokens[pos + 1].value));
                             else if (tokens[pos + 3].value == "string")
                                 variables.Add(new Variable<object>("array", new List<string>(), tokens[pos + 1].value));
@@ -707,17 +694,17 @@ namespace WingTextEditor.Core
                         }
                         else if (tokens[pos + 3 + index].type == "str"
                             || (tokens[pos + 3 + index].type == "customVariableName" && variable1.type == "str"))
-                            if(isValueChange)
+                            if (isValueChange)
                                 variables.Add(new Variable<object>("str", value, tokens[pos + 1].value));
                             else
                                 variables.Add(new Variable<object>("str", tokens[pos + 3 + index].value, tokens[pos + 1].value));
 
-                        if(pos-1>=0 && tokens[pos-1].value == "final")
-                        variables[variables.Count - 1].isImmutable = true;
+                        if (pos - 1 >= 0 && tokens[pos - 1].value == "final")
+                            variables[variables.Count - 1].isImmutable = true;
                     }
                     else
                     {
-                        if(token.value == "int" && !isInt)
+                        if (token.value == "int" && !isInt)
                             errors.Add(new Error("Integer Expected"));
                         else if (token.value == "string" && !isString)
                             errors.Add(new Error("String Expected"));
@@ -726,18 +713,18 @@ namespace WingTextEditor.Core
                         else if (token.value == "array" && !isArray)
                             errors.Add(new Error("Variable Type Expected"));
                         else
-                        errors.Add(new Error("Unexpected Error"));
+                            errors.Add(new Error("Unexpected Error"));
 
                         return (errors, null);
                     }
                     pos += 4;
                 }
-                else if(pos+1<length && token.type == "customVariableName" && tokens[pos+1].value=="is")
+                else if (pos + 1 < length && token.type == "customVariableName" && tokens[pos + 1].value == "is")
                 {
                     Variable<object> variable = getVariable(pos);
                     if (variable == null)
                         return (errors, null);
-                    if(variable.type != "array")
+                    if (variable.type != "array")
                     {
                         if (tokens[pos + 1].value == "is")
                         {
@@ -752,7 +739,7 @@ namespace WingTextEditor.Core
                             {
                                 if (tokens[pos + 2].type == "int")
                                 {
-                                    variable.value = int.Parse(tokens[pos + 2].value);
+                                    variable.value = tokens[pos + 2].value;
                                 }
                                 else
                                 {
@@ -776,7 +763,7 @@ namespace WingTextEditor.Core
                             {
                                 if (tokens[pos + 2].type == "bool")
                                 {
-                                    variable.value = bool.Parse(tokens[pos + 2].value);
+                                    variable.value = tokens[pos + 2].value;
                                 }
                                 else
                                 {
@@ -798,41 +785,102 @@ namespace WingTextEditor.Core
                     }
 
 
-                    pos+=3;
+                    pos += 3;
 
 
                 }
-                else if(pos+1<length && token.type == "customVariableName"
-                    && tokens[pos + 1].type=="keyword" && (tokens[pos+1].value=="get" || tokens[pos + 1].value == "add"))
+                else if (pos + 1 < length && token.type == "customVariableName"
+                    && tokens[pos + 1].type == "keyword" && (tokens[pos + 1].value == "get" || tokens[pos + 1].value == "add" ))
                 {
                     Variable<object> variable = getVariable(pos);
                     if (variable is null)
                         return (errors, null);
 
-                    string type=variable.value.GetType().GetGenericArguments()[0].Name;
+                    string type = variable.value.GetType().GetGenericArguments()[0].Name;
 
-                    
 
-                    if(tokens[pos + 1].value == "add")
+
+                    if (tokens[pos + 1].value == "add")
                     {
-                        bool isIntValid = type=="Int32" && tokens[pos + 2].type=="int";
-                        bool isStringValid = type == "String" && tokens[pos + 2].type == "str";
-                        bool isBooleanValid = type == "Boolean" && tokens[pos + 2].type == "bool";
+                        int indexForth = 0;
+                        object valueForth = 0;
+                        bool isValueChangeForth = false;
+                        if (tokens[pos + 2].type == "bracket" || tokens[pos + 2].type == "customVariableName")
+                        {
+                            if (tokens[pos + 2].type == "bracket")
+                            {
+                                List<Token> tokenList = InBracketTokens(pos + 1, "(");
+                                List<Token> tokenListCopy = new();
+                                tokenListCopy.AddRange(tokenList);
+                                var datas = Parse(tokenList, variables);
+                                if (datas.errors is not null)
+                                    errors.AddRange(datas.errors);
+                                indexForth = 1;
+                                while (tokens[pos + 2 + indexForth].type == "bracket")
+                                {
+                                    indexForth++;
+                                }
+                                tokenListCopy.Remove(tokens[pos + 2 + indexForth]);
+                                foreach (Token tokensArray in tokenListCopy)
+                                {
+                                    tokens.Remove(tokensArray);
+                                }
+                            }
+                            if (tokens[pos + 2 + indexForth].type == "customVariableName")
+                            {
+                                Variable<object> variable1 = getVariable(pos + 2 + indexForth);
+                                if (variable is null)
+                                    return (errors, null);
+
+                                valueForth = variable1.value;
+                                isValueChangeForth = true;
+                                if (variable1.queue.Count != 0)
+                                {
+                                    variable1.value = variable1.getFirstQueueElement();
+                                    variable1.queue.Clear();
+                                }
+                            }
+                            else
+                            {
+                                isValueChangeForth = true;
+                                valueForth = tokens[pos + 1 + indexForth].value;
+                            }
+                        }
+                        Variable<object> variable2 = getVariableWithoutError(pos + 2 + indexForth);
+
+
+
+
+                        bool isIntValid = type == "Int32" && (tokens[pos + 2 + indexForth].type == "int") || 
+                            (tokens[pos + 2 + indexForth].type == "customVariableName" && variable2.type == "int");
+                        bool isStringValid = type == "String" && (tokens[pos + 2 + indexForth].type == "str")||
+                            (tokens[pos + 2 + indexForth].type == "customVariableName" && variable2.type == "str");
+                        bool isBooleanValid = type == "Boolean" && (tokens[pos + 2 + indexForth].type == "bool")||
+                            (tokens[pos + 2 + indexForth].type == "customVariableName" && variable2.type == "bool");
                         bool isValid = isBooleanValid || isStringValid || isIntValid;
                         if (isValid)
                         {
                             if (isIntValid)
                             {
-                                (variable.value as List<int>).Add(int.Parse(tokens[pos +2].value));
-          
+                                if(isValueChangeForth)
+                                    (variable.value as List<int>).Add(Convert.ToInt32(valueForth));
+                                else
+                                    (variable.value as List<int>).Add(int.Parse(tokens[pos + 2 + indexForth].value));
+
                             }
                             else if (isStringValid)
                             {
-                                (variable.value as List<string>).Add(tokens[pos + 2].value);
+                                if (isValueChangeForth)
+                                    (variable.value as List<string>).Add(valueForth.ToString());
+                                else
+                                    (variable.value as List<string>).Add((tokens[pos + 2 + indexForth].value).ToString());
                             }
                             else if (isBooleanValid)
                             {
-                                (variable.value as List<bool>).Add(bool.Parse(tokens[pos + 2].value));
+                                if (isValueChangeForth)
+                                    (variable.value as List<bool>).Add(Convert.ToBoolean(valueForth));
+                                else
+                                    (variable.value as List<bool>).Add(bool.Parse(tokens[pos + 2 + indexForth].value));
                             }
                         }
                         else
@@ -842,17 +890,71 @@ namespace WingTextEditor.Core
                         }
 
                     }
-                    else if(tokens[pos + 1].value == "get")
+                    else if (tokens[pos + 1].value == "get")
                     {
-                        bool isIntValid = type == "Int32" ;
+                        int indexForth = 0;
+                        object valueForth = 0;
+                        bool isValueChangeForth = false;
+                        if (tokens[pos + 2].type == "bracket" || tokens[pos + 2].type == "customVariableName")
+                        {
+                            if (tokens[pos + 2].type == "bracket")
+                            {
+                                List<Token> tokenList = InBracketTokens(pos + 1, "(");
+                                List<Token> tokenListCopy = new();
+                                tokenListCopy.AddRange(tokenList);
+                                var datas = Parse(tokenList, variables);
+                                if (datas.errors is not null)
+                                    errors.AddRange(datas.errors);
+                                indexForth = 1;
+                                while (tokens[pos + 2 + indexForth].type == "bracket")
+                                {
+                                    indexForth++;
+                                }
+                                tokenListCopy.Remove(tokens[pos + 2 + indexForth]);
+                                foreach (Token tokensArray in tokenListCopy)
+                                {
+                                    tokens.Remove(tokensArray);
+                                }
+                            }
+                            if (tokens[pos + 2 + indexForth].type == "customVariableName")
+                            {
+                                Variable<object> variable1 = getVariable(pos + 2 + indexForth);
+                                if (variable1 is null)
+                                    return (errors, null);
+
+                                valueForth = variable1.value;
+                                isValueChangeForth = true;
+                                if (variable1.queue.Count != 0)
+                                {
+                                    variable1.value = variable1.getFirstQueueElement();
+                                    variable1.queue.Clear();
+                                }
+                            }
+                            else
+                            {
+                                isValueChangeForth = true;
+                                valueForth = tokens[pos + 1 + indexForth].value;
+                            }
+                        }
+                        Variable<object> variable2 = getVariableWithoutError(pos + 2 + indexForth);
+
+
+                        bool isIntValid = type == "Int32";
                         bool isStringValid = type == "String";
                         bool isBooleanValid = type == "Boolean";
                         bool isValid = isBooleanValid || isStringValid || isIntValid;
                         if (isValid)
                         {
-                            if(tokens[pos + 2].value != "all" && tokens[pos + 2].type=="int")
+                            if (tokens[pos + 2].value != "all" && (tokens[pos + 2 + indexForth].type == "int" ||
+                                (tokens[pos + 2 + indexForth].type == "customVariableName" && variable2.type == "int")))
                             {
-                                int index = int.Parse(tokens[pos + 2].value);
+                                int index = -1;
+                                if (!isValueChangeForth)
+                                    index = int.Parse(tokens[pos + 2 + indexForth].value);
+                                else
+                                    index = Convert.ToInt32(valueForth);
+
+
                                 if (isIntValid)
                                 {
                                     List<int> list = (variable.value as List<int>);
@@ -902,7 +1004,7 @@ namespace WingTextEditor.Core
                                     }
                                 }
                             }
-                            else if(tokens[pos + 2].value == "all")
+                            else if (tokens[pos + 2].value == "all")
                             {
 
                                 tokens[pos].type = "str";
@@ -931,10 +1033,10 @@ namespace WingTextEditor.Core
                                 {
                                     StringBuilder builder = new();
                                     builder.Append("[");
-                                    for(int i = 0; i < list.Count; i++)
+                                    for (int i = 0; i < list.Count; i++)
                                     {
                                         builder.Append(list[i]);
-                                        if(i==list.Count-1)
+                                        if (i == list.Count - 1)
                                             builder.Append("]");
                                         else
                                             builder.Append(" ,");
@@ -944,6 +1046,19 @@ namespace WingTextEditor.Core
                                     return builder.ToString();
                                 }
                             }
+                            else if(tokens[pos + 2].value == "size")
+                            {
+                                tokens[pos].type = "int";
+                                if (isIntValid)
+                                    tokens[pos].value = (variable.value as List<int>).Count.ToString();
+                                else if(isStringValid)
+                                    tokens[pos].value = (variable.value as List<string>).Count.ToString();
+                                else
+                                    tokens[pos].value = (variable.value as List<bool>).Count.ToString();
+
+
+                            }
+
                             else
                             {
                                 errors.Add(new Error("Array Syntax Error"));
@@ -1000,7 +1115,7 @@ namespace WingTextEditor.Core
                     {
                         if (tokens[pos + 1].type == "bracket")
                         {
-                            List<Token> tokenList = InBracketTokens(pos , "(");
+                            List<Token> tokenList = InBracketTokens(pos, "(");
                             List<Token> tokenListCopy = new();
                             tokenListCopy.AddRange(tokenList);
                             var datas = Parse(tokenList, variables);
@@ -1037,52 +1152,54 @@ namespace WingTextEditor.Core
                             valueForth = tokens[pos + 1 + indexForth].value;
                         }
                     }
-                    Variable<object> variable1 = getVariableWithoutError(pos + 1 +indexForth);
+                    Variable<object> variable1 = getVariableWithoutError(pos + 1 + indexForth);
                     Variable<object> variable2 = getVariableWithoutError(pos - 1 - indexBack);
                     bool isRightValid = true;
-                    bool isLeftValid= true;
+                    bool isLeftValid = true;
                     if (variable1 is null)
-                        isRightValid=false;
-                    if(variable2 is null)
-                        isLeftValid=false;
+                        isRightValid = false;
+                    if (variable2 is null)
+                        isLeftValid = false;
 
-                    if ((tokens[pos+1+indexForth].type == "int" || (tokens[pos + 1 + indexForth].type == "customVariableName" && variable1.type=="int")) 
+
+
+                    if ((tokens[pos + 1 + indexForth].type == "int" || (tokens[pos + 1 + indexForth].type == "customVariableName" && variable1.type == "int"))
                         && (tokens[pos - 1 - indexBack].type == "int" || (tokens[pos - 1 - indexBack].type == "customVariableName" && variable2.type == "int")))
-                      {
+                    {
                         void operatorUse(Func<Tuple<int, int>, bool> func)
                         {
                             if (isValueChangeBack && isValueChangeForth)
                             {
 
-                                tokens[pos - 1 - indexBack].value = func(new Tuple<int,int>(Convert.ToInt32(valueBack), Convert.ToInt32(valueForth))).ToString().ToLower();
+                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(Convert.ToInt32(valueBack), Convert.ToInt32(valueForth))).ToString().ToLower();
                                 tokens[pos - 1 - indexBack].type = "bool";
 
 
                             }
                             else if (isValueChangeBack)
                             {
-                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(Convert.ToInt32(valueBack) , int.Parse(tokens[pos + 1].value))).ToString().ToLower();
+                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(Convert.ToInt32(valueBack), int.Parse(tokens[pos + 1].value))).ToString().ToLower();
                                 tokens[pos - 1 - indexBack].type = "bool";
                             }
                             else if (isValueChangeForth)
                             {
-                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(int.Parse(tokens[pos - 1].value) , Convert.ToInt32(valueForth))).ToString().ToLower();
+                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(int.Parse(tokens[pos - 1].value), Convert.ToInt32(valueForth))).ToString().ToLower();
                                 tokens[pos - 1 - indexBack].type = "bool";
                             }
 
                             else
                             {
-                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(int.Parse(tokens[pos - 1].value) , int.Parse(tokens[pos + 1].value))).ToString().ToLower();
+                                tokens[pos - 1 - indexBack].value = func(new Tuple<int, int>(int.Parse(tokens[pos - 1].value), int.Parse(tokens[pos + 1].value))).ToString().ToLower();
                                 tokens[pos - 1 - indexBack].type = "bool";
                             }
                         }
                         if (token.value == ">")
                             operatorUse(x => x.Item1 > x.Item2);
-                        else if(token.value == "<")
+                        else if (token.value == "<")
                             operatorUse(x => x.Item1 < x.Item2);
-                        else if(token.value == "==")
+                        else if (token.value == "==")
                             operatorUse(x => x.Item1 == x.Item2);
-                        else if(token.value == ">=")
+                        else if (token.value == ">=")
                             operatorUse(x => x.Item1 >= x.Item2);
                         else if (token.value == ">=")
                             operatorUse(x => x.Item1 >= x.Item2);
@@ -1091,21 +1208,24 @@ namespace WingTextEditor.Core
                         else if (token.value == "!=")
                             operatorUse(x => x.Item1 != x.Item2);
                     }
-                    pos+=10;
+                    pos += 10;
                 }
-                else if(token.type=="keyword" && token.value == "if")
+                else if (token.type == "keyword" && token.value == "if")
                 {
                     int i = 1;
 
                     if (tokens[pos + 1].type == "bracket")
                     {
-                        List<Token> tokenList = InBracketTokens(pos , "(");
+                        List<Token> tokenList = InBracketTokens(pos, "(");
                         List<Token> tokenListCopy = new();
                         tokenListCopy.AddRange(tokenList);
                         int tokenListCount = tokenListCopy.Count;
                         var datas = Parse(tokenList, variables);
                         if (datas.errors is not null)
+                        {
                             errors.AddRange(datas.errors);
+                            return (errors, null);
+                        }
                         stringBuilder.Append(datas.builder.ToString());
                         while (tokens[pos + i].type == "bracket")
                         {
@@ -1124,17 +1244,19 @@ namespace WingTextEditor.Core
                         i = 2;
 
 
-                    if ((tokens[pos + 1 + i/2].type=="bool") && 
-                        (tokens[pos + 2 + i].value == "then" && tokens[pos + 2 + i].type=="keyword") &&
+
+
+                    if ((tokens[pos + 1 + i / 2].type == "bool") &&
+                        (tokens[pos + 2 + i].value == "then" && tokens[pos + 2 + i].type == "keyword") &&
                         tokens[pos + 3 + i].type == "bracket")
                     {
 
                         bool isValidElseIf = false;
-                        List<Token> tokenList = InBracketTokens(pos + 2 + i , "{");
+                        List<Token> tokenList = InBracketTokens(pos + 2 + i, "{");
                         List<Token> tokenListCopy = new();
                         tokenListCopy.AddRange(tokenList);
-                        int tokenListCount=tokenListCopy.Count;
-                        if(tokens[pos + 1 + i/2].value == "true")
+                        int tokenListCount = tokenListCopy.Count;
+                        if (tokens[pos + 1 + i / 2].value == "true")
                         {
                             var datas = Parse(tokenList, new List<Variable<object>>(variables));
                             if (datas.errors is not null)
@@ -1142,7 +1264,7 @@ namespace WingTextEditor.Core
                                 errors.AddRange(datas.errors);
                                 return (errors, null);
                             }
-                                
+
                             stringBuilder.Append(datas.builder.ToString());
                             int index = 1;
                             while (tokens[pos + 3 + i + index].type == "bracket")
@@ -1160,15 +1282,16 @@ namespace WingTextEditor.Core
                         {
                             pos += 4 + 2 + i + tokenListCount - 1;
                             isValidElseIf = true;
+
                         }
-                            
+
                         while (pos < tokens.Count && tokens[pos].value == "else if")
                         {
                             i = 1;
 
                             if (tokens[pos + 2].type == "bracket")
                             {
-                                tokenList = InBracketTokens(pos, "(");
+                                tokenList = InBracketTokens(pos + 1, "(");
                                 tokenListCopy = new();
                                 tokenListCopy.AddRange(tokenList);
                                 tokenListCount = tokenListCopy.Count;
@@ -1180,7 +1303,6 @@ namespace WingTextEditor.Core
                                 {
                                     i++;
                                 }
-
                                 tokenListCopy.Remove(tokens[pos + 1 + i]);
                                 foreach (Token tokensArray in tokenListCopy)
                                 {
@@ -1203,7 +1325,7 @@ namespace WingTextEditor.Core
                                 tokenListCount = tokenListCopy.Count;
                                 if (tokens[pos + 2 + i / 2].value == "true" && isValidElseIf)
                                 {
-                                    isValidElseIf=false;
+                                    isValidElseIf = false;
                                     var datas = Parse(tokenList, new List<Variable<object>>(variables));
                                     if (datas.errors is not null)
                                     {
@@ -1226,20 +1348,23 @@ namespace WingTextEditor.Core
                                 }
                                 else
                                     pos += 5 + 2 + i + tokenListCount - 1;
+
                             }
                             else
                             {
+
                                 errors.Add(new Error("Wrong if statement"));
                                 return (errors, null);
                             }
                         }
-                        if (pos< tokens.Count && tokens[pos].value == "else")
+                        if (pos < tokens.Count && tokens[pos].value == "else")
                         {
-                                tokenList = InBracketTokens(pos , "{");
-                                tokenListCopy = new();
-                                tokenListCopy.AddRange(tokenList);
-                                tokenListCount = tokenListCopy.Count;
-                            if(isValidElseIf)
+                            tokenList = InBracketTokens(pos, "{");
+                            tokenListCopy = new();
+                            tokenListCopy.AddRange(tokenList);
+                            tokenListCount = tokenListCopy.Count;
+
+                            if (isValidElseIf)
                             {
 
                                 var datas = Parse(tokenList, new List<Variable<object>>(variables));
@@ -1261,15 +1386,12 @@ namespace WingTextEditor.Core
                                     tokens.Remove(tokensArray);
                                 }
                                 pos += 4;
-                                
+
                             }
                             else
                                 pos += 4 + i + tokenListCount - 1;
                         }
-                        
-                    }
-                    else if(token.type == "keyword" && token.value == "loop")
-                    {
+
 
                     }
                     else
@@ -1278,6 +1400,137 @@ namespace WingTextEditor.Core
                         return (errors, null);
                     }
                 }
+                else if (token.type == "keyword" && token.value == "loop")
+                {
+                    Variable<object> variable = getVariableWithoutError(pos + 1);
+                    int indexForth = 0;
+                    object valueForth = 0;
+                    bool isValueChangeForth = false;
+                    if (tokens[pos + 3].type == "bracket" || tokens[pos + 3].type == "customVariableName")
+                    {
+                        if (tokens[pos + 3].type == "bracket")
+                        {
+                            List<Token> tokenList = InBracketTokens(pos + 2, "(");
+                            List<Token> tokenListCopy = new();
+                            tokenListCopy.AddRange(tokenList);
+                            var datas = Parse(tokenList, variables);
+                            if (datas.errors is not null)
+                                errors.AddRange(datas.errors);
+                            indexForth = 1;
+                            while (tokens[pos + 3 + indexForth].type == "bracket")
+                            {
+                                indexForth++;
+                            }
+                            tokenListCopy.Remove(tokens[pos + 3 + indexForth]);
+                            foreach (Token tokensArray in tokenListCopy)
+                            {
+                                tokens.Remove(tokensArray);
+                            }
+                        }
+                        if (tokens[pos + 3 + indexForth].type == "customVariableName")
+                        {
+                            Variable<object> variable1 = getVariable(pos + 3 + indexForth);
+                            if (variable1 is null)
+                                return (errors, null);
+
+                            valueForth = variable1.value;
+                            isValueChangeForth = true;
+                            if (variable1.queue.Count != 0)
+                            {
+                                variable1.value = variable1.getFirstQueueElement();
+                                variable1.queue.Clear();
+                            }
+                        }
+                        else
+                        {
+                            isValueChangeForth = true;
+                            valueForth = tokens[pos + 3 + indexForth].value;
+                        }
+                    }
+                    Variable<object> variable2 = getVariableWithoutError(pos + 3 + indexForth);
+
+
+                    bool IsValid = pos + 3 < length && tokens[pos + 1].type == "customVariableName"
+                        && variable is null
+                        && (tokens[pos + 2].value == "to" && tokens[pos + 2].type == "keyword")
+                        && (tokens[pos + 3 + indexForth].type == "int" ||
+                        (tokens[pos + 3 + indexForth].type == "customVariableName"
+                        && variable2.type == "int"));
+
+                    if (IsValid)
+                    {
+                        int arrayIndex = 0;
+                        if (isValueChangeForth)
+                            arrayIndex = Convert.ToInt32(valueForth);
+                        else
+                            arrayIndex = int.Parse(tokens[pos + 3].value);
+
+                        List<Variable<object>> tempVariables = new List<Variable<object>>();
+                        tempVariables.Add(new Variable<object>("int", 0, tokens[pos + 1].value));
+                        tempVariables.AddRange(variables);
+                        if (indexForth != 0)
+                            indexForth = 2;
+                        List<Token> tokenList = InBracketTokens(pos + 3 + indexForth, "{");
+                        List<Token> tokenListCopy = new();
+                        foreach (Token tempTokens in tokenList)
+                            tokenListCopy.Add(new Token(tempTokens.type, tempTokens.value));
+
+                        int tokenListCount = tokenListCopy.Count;
+                        for (int i = 0; i < arrayIndex; i++)
+                        {
+                            
+                            var datas = Parse(tokenListCopy, tempVariables);
+                            if (datas.errors is not null)
+                            {
+                                errors.AddRange(datas.errors);
+                                return (errors, null);
+                            }
+                            stringBuilder.Append(datas.builder.ToString());
+                            tokenListCopy.Clear();
+                            foreach (Token tempTokens in tokenList)
+                                tokenListCopy.Add(new Token(tempTokens.type, tempTokens.value));
+                            Variable<object> loopVariable = tempVariables[0];
+                            tempVariables.Clear();
+                            tempVariables.Add(loopVariable);
+                            tempVariables.AddRange(variables);
+                            i = Convert.ToInt32(tempVariables[0].value);
+                            tempVariables[0].value = Convert.ToInt32(tempVariables[0].value) + 1;
+                        }
+                        int index = 1;
+                        while (tokens[pos + 3 + index].type == "bracket")
+                        {
+                            index++;
+                        }
+                        tokenList.Remove(tokens[pos + 3 + index]);
+                        foreach (Token tokensArray in tokenList)
+                        {
+                            tokens.Remove(tokensArray);
+                        }
+                        pos += 7;
+
+                    }
+                    else
+                    {
+                        errors.Add(new Error("Loop Error"));
+                        return (errors, null);
+                    }
+
+
+                }
+                else if (token.type == "customVariableName")
+                {
+                    Variable<object> variable = getVariable(pos);
+                    if (errors.Count != 0)
+                        return (errors, null);
+                    if (variable.type == "bool")
+                    {
+                        token.type = "bool";
+                        token.value = variable.value.ToString();
+                    }
+                    pos++;
+                }
+
+
 
                 else
                 {
@@ -1293,13 +1546,13 @@ namespace WingTextEditor.Core
 
 
 
-        public (List<Error> errors, List<Token> tokens) TokenStream(string data)
+        public static (List<Error> errors, List<Token> tokens) TokenStream(string data)
         {
             string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
             string numbers = "0123456789";
             int pos = 0;
             int length = data.Length;
-            string[] validKeywords = { "print", "final", "printf", "is" ,"get" , "add","if","else" , "else if","loop","to","all","then"};
+            string[] validKeywords = { "print", "final", "printf", "is" ,"get" , "add","if","else" , "else if","loop","to","all","then","break","size"};
             char[] validOperators = { '+', '-', '=' ,'*','/'};
             string[] booleanOperators = { ">", "<", "==", ">=", "<=", "!=" };
             string[] variableNames = { "int", "string", "bool", "let" , "array"};
@@ -1319,6 +1572,8 @@ namespace WingTextEditor.Core
                     pos++;
                     continue;
                 }
+
+
                 else if (currentChar == '\"')
                 {
                     string res = "";
@@ -1352,8 +1607,6 @@ namespace WingTextEditor.Core
                         errors.Add(new Error("Not a valid number"));
                         return (errors, null);
                     }
-
-
                     tokens.Add(new Token("int", number));
                 }
                 else if (validChars.Contains(currentChar))
@@ -1406,6 +1659,25 @@ namespace WingTextEditor.Core
 
                     tokens.Add(new Token("command", res));
                 }
+                else if (currentChar == '/' && data[pos + 1] == '*')
+                {
+                    pos += 2;
+                    string res = "";
+                    while (pos < length && !(data[pos] == '*' && data[pos+1] == '/'))
+                    {
+                        res += data[pos];
+                        pos++;
+                    }
+                    if(pos == length)
+                    {
+                        errors.Add(new Error("Not closed command"));
+                        return (errors, null);
+                    }
+                    pos += 2;
+
+                    tokens.Add(new Token("command", res));
+                }
+
                 else if (booleanOperators.Contains(data[pos].ToString()) ||
          ((data[pos] == '=' && data[pos + 1] == '=') || (data[pos] == '!' && data[pos + 1] == '=') ||
          (data[pos] == '>' && data[pos + 1] == '=') || (data[pos] == '<' && data[pos + 1] == '=')))
@@ -1514,7 +1786,6 @@ namespace WingTextEditor.Core
         }
 
     }
-
     public class Variable<T>
     {
         public string type;
@@ -1573,14 +1844,4 @@ namespace WingTextEditor.Core
             return message;
         }
     }
-
-
-    public enum ExecuteType
-    {
-        CStyle,
-        JavaStyle,
-    }
-
-
-
 }

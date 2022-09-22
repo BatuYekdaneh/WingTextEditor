@@ -14,11 +14,8 @@
     <Style TargetType="MenuItem" x:Key="MenuButtonTheme">
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="Header" Value="{Binding Name}"/>
-        <Style.Triggers>
-            <Trigger Property="Tag" Value="constant">
-                <Setter Property="IsHitTestVisible" Value="False"/>
-            </Trigger> 
-        </Style.Triggers>
+        <Setter Property="Tag" Value="{Binding Tag}"/>
+ 
     </Style>
     <Style TargetType="MenuItem" x:Key="SubMenuItemTheme" >
         <Setter Property="Template">
