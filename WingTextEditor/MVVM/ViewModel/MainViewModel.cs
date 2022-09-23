@@ -188,7 +188,15 @@ namespace WingTextEditor.MVVM.ViewModel
         }
         public void Load(object obj)
         {
-            string text = File.ReadAllText("Saves/Project.json");
+            string text = "";
+            if (File.Exists("Saves/Project.json"))
+                text = File.ReadAllText("Saves/Project.json");
+            else
+            {
+                MessageBox.Show("Couldn't be found the save file");
+                return;
+            }
+               
             ObservableCollection<TabControlModel> temp = JsonSerializer.Deserialize<ObservableCollection<TabControlModel>>(text);
             tabControlModels.Clear();
             foreach (TabControlModel model in temp)
