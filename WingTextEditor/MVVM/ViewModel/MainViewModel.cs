@@ -194,7 +194,6 @@ namespace WingTextEditor.MVVM.ViewModel
             foreach (TabControlModel model in temp)
                 tabControlModels.Add(model);
             ActivePage = tabControlModels[0];
-            string selectedLanguage = File.ReadAllText("Saves/languagesettings.json");
         }
         public void NewPage(object obj)
         {
