@@ -199,7 +199,7 @@ namespace WingTextEditor.MVVM.ViewModel
             if (tabControlModels.Count == 0)
                 name = "Main Page";
             else
-                name = obj as string + tabControlModels.Count;
+                name = (obj as string) + tabControlModels.Count;
             TabControlModels.Add(new TabControlModel() { Name = name });
             if (tabControlModels.Count == 1)
                 ActivePage = tabControlModels[0];
