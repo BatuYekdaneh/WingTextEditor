@@ -182,7 +182,13 @@ namespace WingTextEditor.MVVM.ViewModel
         public void Save(object obj)
         {
             string text = JsonSerializer.Serialize(TabControlModels);
-            File.WriteAllText("Saves/Project.json", text);
+            if (Directory.Exists("Saves"))
+                File.WriteAllText("Saves/Project.json", text);
+            else
+            {
+                Directory.CreateDirectory("Saves");
+                Save(obj);
+            }
 
 
         }
