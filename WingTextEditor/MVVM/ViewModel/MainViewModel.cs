@@ -9,6 +9,8 @@ using System.Windows;
 using System.Windows.Input;
 using WingTextEditor.Core;
 using WingTextEditor.MVVM.Model;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 
 using System.Reflection;
@@ -192,6 +194,7 @@ namespace WingTextEditor.MVVM.ViewModel
             foreach (TabControlModel model in temp)
                 tabControlModels.Add(model);
             ActivePage = tabControlModels[0];
+            string selectedLanguage = File.ReadAllText("Saves/languagesettings.json");
         }
         public void NewPage(object obj)
         {
