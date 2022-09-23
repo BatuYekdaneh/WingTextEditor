@@ -16,6 +16,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows.Controls;
+using System.Threading;
 
 namespace WingTextEditor.MVVM.ViewModel
 {
@@ -91,6 +92,7 @@ namespace WingTextEditor.MVVM.ViewModel
         private ICommand deleteSelectedPageCommand;
 
         private ICommand runCommand { get; set; }
+        bool isRunning { get; set; }
 
         public ICommand RunCommand
         {
@@ -132,16 +134,25 @@ namespace WingTextEditor.MVVM.ViewModel
             menus.Add(new MenuModel() { Name = "Edit", MenuModels = EditMenu });
             tabControlModels.Add(new TabControlModel { Name = "Main Page" });
             ActivePage = tabControlModels[0];
+            isRunning = false;
         }
 
-        public void Run(object obj)
+        public async void Run(object obj)
         {
 
-            if(ActivePage is not null && activePage.PageText is not null)
-                Output=Wing.Execute(activePage.PageText);
+            if (ActivePage is not null && activePage.PageText is not null)
+            {
+                if (!isRunning)
+                {
+                    isRunning=true;
+                    Output = await Task.Run(() => Wing.Execute(activePage.PageText));
+                    isRunning=false;
+                }
+                else
+                    Output = "Already executing...";
+                
+            }
 
-
-           
         }
         public void Exit(object obj)
         {
