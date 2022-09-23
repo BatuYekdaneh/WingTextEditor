@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <Reference Include="Wing">
-      <HintPath>..\..\Wing\Wing\bin\Debug\net6.0\Wing.dll</HintPath>
+      <HintPath>libs\Wing.dll</HintPath>
     </Reference>
   </ItemGroup>
 
